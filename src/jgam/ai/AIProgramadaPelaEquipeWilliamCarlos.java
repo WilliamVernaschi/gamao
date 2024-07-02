@@ -91,7 +91,7 @@ public class AIProgramadaPelaEquipeWilliamCarlos implements AI {
 
             for(int i = 0; i < Math.min(10, moveList.size()); i++){
                 BoardSetup nextState = moveList.get(i);
-                v = Math.max(v, maxValue(nextState, a, b, depth + 1));
+                v = Math.max(v, minValue(nextState, a, b, depth + 1));
                 if (v >= b) return v;
                 a = Math.max(a, v);
             }
