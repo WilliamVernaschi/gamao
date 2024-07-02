@@ -1,11 +1,13 @@
 package jgam.ai;
 
 import jgam.game.BoardSetup;
+import jgam.game.BoardSetupComparator;
 import jgam.game.PossibleMoves;
 import jgam.game.SingleMove;
 import jgam.util.IntList;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -32,16 +34,16 @@ public class AIProgramadaPelaEquipeWilliamCarlos implements AI {
     private List<IntList> getAllPossibleDiceRolls() {
     List<IntList> rolls = new ArrayList<>();
     for (int i = 1; i <= 6; i++) {
-        for (int j = 1; j <= 6; j++) {
-            IntList roll = new IntList(2);
-            roll.add(i); roll.add(j);
+        for (int j = 1; j < i; j++) {
+            IntList roll = new IntList(new int[]{i, j});
             rolls.add(roll);
         }
+        rolls.add(new IntList(new int[]{i, i}));
     }
     return rolls;
 }
 
-    public SingleMove[] alphaBetaSearch(BoardSetup bs){
+    public SingleMove[] makeMoves(BoardSetup bs){
         PossibleMoves pm = new PossibleMoves(bs);
 
         int decision = 0;
@@ -51,7 +53,7 @@ public class AIProgramadaPelaEquipeWilliamCarlos implements AI {
         List<BoardSetup> moveList = pm.getPossbibleNextSetups();
 
         for(BoardSetup nextState : moveList){
-            double thisV = maxValue(nextState, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, 0);
+            double thisV = maxValue(nextState, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, 1);
             if(thisV > v){
                 decision = i;
             }
@@ -62,11 +64,11 @@ public class AIProgramadaPelaEquipeWilliamCarlos implements AI {
     }
 
     private boolean cutoffTest(BoardSetup bs, int depth){
-        return depth == 5;
+        return depth == 3;
     }
 
     private double eval(BoardSetup bs){
-        return 0;
+        return heuristic(bs);
     }
 
 
@@ -74,14 +76,21 @@ public class AIProgramadaPelaEquipeWilliamCarlos implements AI {
         if(cutoffTest(bs, depth)) return eval(bs);
 
         double v = Double.NEGATIVE_INFINITY;
-        // Iterate over all possible dice roll outcomes
 
+
+        // Iterate over all possible dice roll outcomes
         for (IntList roll : getAllPossibleDiceRolls()) {
 
-            PossibleMoves pm = new PossibleMoves(bs, roll); 
+            PossibleMoves pm = new PossibleMoves(bs, roll, true);
             List<BoardSetup> moveList = pm.getPossbibleNextSetups();
 
-            for (BoardSetup nextState : moveList) {
+            //moveList.sort(comparator);
+            //Collections.reverse(moveList);
+            Collections.shuffle(moveList);
+
+
+            for(int i = 0; i < Math.min(10, moveList.size()); i++){
+                BoardSetup nextState = moveList.get(i);
                 v = Math.max(v, maxValue(nextState, a, b, depth + 1));
                 if (v >= b) return v;
                 a = Math.max(a, v);
@@ -94,12 +103,16 @@ public class AIProgramadaPelaEquipeWilliamCarlos implements AI {
         if(cutoffTest(bs, depth)) return eval(bs);
 
         double v = Double.POSITIVE_INFINITY;
-        
+
         for (IntList roll : getAllPossibleDiceRolls()) {
-            PossibleMoves pm = new PossibleMoves(bs, roll);
+            PossibleMoves pm = new PossibleMoves(bs, roll, true);
             List<BoardSetup> moveList = pm.getPossbibleNextSetups();
+
+            //moveList.sort(comparator);
+            Collections.shuffle(moveList);
             
-            for (BoardSetup nextState : moveList) {
+            for(int i = 0; i < Math.min(10, moveList.size()); i++){
+                BoardSetup nextState = moveList.get(i);
                 v = Math.min(v, maxValue(nextState, a, b, depth + 1));
                 if (v <= a) return v;
                 b = Math.min(v, b);
@@ -137,12 +150,17 @@ public class AIProgramadaPelaEquipeWilliamCarlos implements AI {
         return evaluation;
     }
 
-    public SingleMove[] makeMoves(BoardSetup bs) throws CannotDecideException {
+    /*public SingleMove[] makeMoves(BoardSetup bs) throws CannotDecideException {
         double evaluation = Double.NEGATIVE_INFINITY;
         int decision = -1;
 
         PossibleMoves pm = new PossibleMoves(bs);
         List moveList = pm.getPossbibleNextSetups();
+
+        PossibleMoves pm2 = new PossibleMoves(bs, new IntList(new int[]{1,1}), true);
+        List moveList2 = pm2.getPossbibleNextSetups();
+
+
 
         int i = 0;
         for (Iterator iter = moveList.iterator(); iter.hasNext(); i++) {
@@ -158,7 +176,7 @@ public class AIProgramadaPelaEquipeWilliamCarlos implements AI {
             return new SingleMove[0];
         else
             return pm.getMoveChain(decision);
-    }
+    }*/
 
     public int rollOrDouble(BoardSetup boardSetup) throws CannotDecideException {
         return ROLL;
